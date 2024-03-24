@@ -4,7 +4,7 @@
 
     <groupId>io.github.the-sdet</groupId>
     <artifactId>test-automation-utils</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
 
     <name>test-automation-utils</name>
@@ -28,6 +28,9 @@
 
         <selenium.version>4.18.1</selenium.version>
         <playwright.version>1.41.2</playwright.version>
+        <reset-assured.version>5.4.0</reset-assured.version>
+        <apache-poi.version>5.2.5</apache-poi.version>
+        <jayway.version>2.9.0</jayway.version>
         <appium.version>9.1.0</appium.version>
         <spotless.version>2.43.0</spotless.version>
         <junit.version>5.10.1</junit.version>
@@ -70,6 +73,24 @@
             <groupId>com.microsoft.playwright</groupId>
             <artifactId>playwright</artifactId>
             <version>${playwright.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>${reset-assured.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>${apache-poi.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${apache-poi.version}</version>
         </dependency>
 
         <dependency>

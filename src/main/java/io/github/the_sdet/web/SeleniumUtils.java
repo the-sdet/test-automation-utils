@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Base64;
 
+import static io.github.the_sdet.files.FileUtils.copyFile;
+
 /**
  * Utility class for Selenium-based web automation tasks. This class provides
  * various methods to interact with web elements, take screenshots, handle
@@ -133,6 +135,20 @@ public class SeleniumUtils extends Utils {
   }
 
   /**
+   * Enters value on to element identified by the specified XPath
+   *
+   * @param xpath
+   *            The XPath of the element
+   * @param value
+   *            Value to send
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  @Override
+  void fillText(String xpath, String value) {
+    getElementByXpath(xpath).sendKeys(value);
+  }
+
+  /**
    * Clicks on the specified WebElement.
    *
    * @param element
@@ -164,10 +180,30 @@ public class SeleniumUtils extends Utils {
    * @author Pabitra Swain (contact.the.sdet@gmail.com)
    */
   @Override
-  public void jsClick(String xpath) {
+  public void javaScriptClick(String xpath) {
     try {
       javascriptExecutor.executeScript("arguments[0].click();", getElementByXpath(xpath));
       Log.info("Clicked on Element with Xpath: " + xpath);
+    } catch (Exception e) {
+      Log.error("An error occurred: " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Enters value on to element identified by the specified XPath using
+   * JavaScript.
+   *
+   * @param xpath
+   *            The XPath of the element
+   * @param value
+   *            Value to send
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  @Override
+  void javaScriptFillText(String xpath, String value) {
+    try {
+      javascriptExecutor.executeScript("arguments[0].value=" + value + ";", getElementByXpath(xpath));
+      Log.info("Entered Text" + value + " on Element with Xpath: " + xpath);
     } catch (Exception e) {
       Log.error("An error occurred: " + e.getMessage(), e);
     }
@@ -402,7 +438,7 @@ public class SeleniumUtils extends Utils {
       click(new WebDriverWait(driver, Duration.ofSeconds(seconds))
           .until(ExpectedConditions.elementToBeClickable(By.xpath(xpath))));
     } catch (TimeoutException e) {
-      Log.error("Couldn't find element within specified time period. Xpath: " + xpath);
+      Log.error("Couldn't find element within specified time period. Xpath: " + xpath, e);
     }
   }
 
@@ -414,7 +450,7 @@ public class SeleniumUtils extends Utils {
    * @author Pabitra Swain (contact.the.sdet@gmail.com)
    */
   @Override
-  public void wait(int seconds) {
+  public void waitForSeconds(int seconds) {
     Log.info("Wait started for " + seconds + " seconds...");
     try {
       Thread.sleep(seconds * 1000L);
@@ -595,4 +631,428 @@ public class SeleniumUtils extends Utils {
     return getElementByXpath(customizeXpath(rawXpath, value1, value2, value3));
   }
 
+  /**
+   * Checks if the element identified by XPath is visible.
+   *
+   * @param xpath
+   *            XPath identifying the element
+   * @return true if the element is visible, false otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  @Override
+  public boolean isVisible(String xpath) {
+    try {
+      return driver.findElement(By.xpath(xpath)).isDisplayed();
+    } catch (NullPointerException e) {
+      return false;
+    }
+  }
+
+  /**
+   * Checks if the element identified by the given locator is visible.
+   *
+   * @param locator
+   *            locator for identifying the element
+   * @return true if the element is visible, false otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+  public boolean isVisible(By locator) {
+    try {
+      return driver.findElement(locator).isDisplayed();
+    } catch (NullPointerException e) {
+      return false;
+    }
+  }
+
+  /**
+   * Waits for the element identified by XPath to be visible.
+   *
+   * @param xpath
+   *            XPath identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return true if the element becomes visible within the duration, false
+   *         otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  @Override
+  public boolean waitAndCheckIsVisible(String xpath, Duration duration) {
+    try {
+      WebDriverWait wait = new WebDriverWait(driver, duration);
+      wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath)));
+      Log.info("Element is Visible: " + xpath);
+      return true;
+    } catch (Exception e) {
+      Log.info("Element is NOT Visible...");
+      return false;
+    }
+  }
+
+  /**
+   * Waits for the element identified by XPath to be visible.
+   *
+   * @param element
+   *            locator for identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return true if the element becomes visible within the duration, false
+   *         otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  public boolean waitAndCheckIsVisible(By element, Duration duration) {
+    try {
+      WebDriverWait wait = new WebDriverWait(driver, duration);
+      wait.until(ExpectedConditions.visibilityOfElementLocated(element));
+      Log.info("Element is Visible: " + element);
+      return true;
+    } catch (Exception e) {
+      Log.info("Element is NOT Visible...");
+      return false;
+    }
+  }
+
+  /**
+   * Waits for the element identified by XPath to be clickable.
+   *
+   * @param xpath
+   *            XPath identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return true if the element becomes clickable within the duration, false
+   *         otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  @Override
+  public boolean waitAndCheckIsClickable(String xpath, Duration duration) {
+    try {
+      WebDriverWait wait = new WebDriverWait(driver, duration);
+      wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpath)));
+      Log.info("Element is Visible: " + xpath);
+      return true;
+    } catch (Exception e) {
+      Log.info("Element is NOT Visible...");
+      return false;
+    }
+  }
+
+  /**
+   * Waits for the element identified by XPath to be clickable.
+   *
+   * @param element
+   *            locator for identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return true if the element becomes clickable within the duration, false
+   *         otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  public boolean waitAndCheckIsClickable(By element, Duration duration) {
+    try {
+      WebDriverWait wait = new WebDriverWait(driver, duration);
+      wait.until(ExpectedConditions.elementToBeClickable(element));
+      Log.info("Element is Clickable: " + element);
+      return true;
+    } catch (Exception e) {
+      Log.info("Element is NOT Clickable...");
+      return false;
+    }
+  }
+
+  /**
+   * Waits for the element identified by XPath to become invisible.
+   *
+   * @param xpath
+   *            XPath identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return true if the element becomes invisible within the duration, false
+   *         otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  @Override
+  public boolean waitAndCheckIsInVisible(String xpath, Duration duration) {
+    try {
+      WebDriverWait wait = new WebDriverWait(driver, duration);
+      wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpath)));
+      Log.info("Element is clickable: " + xpath);
+      return true;
+    } catch (Exception e) {
+      Log.info("Element is NOT clickable...");
+      return false;
+    }
+  }
+
+  /**
+   * Waits for the element identified by the given locator to become invisible.
+   *
+   * @param element
+   *            locator for identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return true if the element becomes invisible within the duration, false
+   *         otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  public boolean waitAndCheckIsInVisible(By element, Duration duration) {
+    try {
+      WebDriverWait wait = new WebDriverWait(driver, duration);
+      wait.until(ExpectedConditions.elementToBeClickable(element));
+      Log.info("Element is clickable: " + element.toString());
+      return true;
+    } catch (Exception e) {
+      Log.info("Element is NOT clickable...");
+      return false;
+    }
+  }
+
+  /**
+   * Waits for the element identified by XPath to be present within a specified
+   * duration.
+   *
+   * @param xpath
+   *            XPath identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return WebElement representing the located element
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  public WebElement waitAndFindElement(String xpath, Duration duration) {
+    WebDriverWait wait = new WebDriverWait(driver, duration);
+    return wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath)));
+  }
+
+  /**
+   * Waits for the element identified by the given locator to be present within a
+   * specified duration.
+   *
+   * @param locator
+   *            locator for identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return WebElement representing the located element
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  public WebElement waitAndFindElement(By locator, Duration duration) {
+    WebDriverWait wait = new WebDriverWait(driver, duration);
+    return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+  }
+
+  /**
+   * Waits for the element identified by XPath to be present within a default
+   * duration of 5 seconds.
+   *
+   * @param xpath
+   *            XPath identifying the element
+   * @return WebElement representing the located element
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  public WebElement waitAndFindElement(String xpath) {
+    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+    return wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath)));
+  }
+
+  /**
+   * Waits for the element identified by the given locator to be present within a
+   * default duration of 5 seconds.
+   *
+   * @param locator
+   *            locator for identifying the element
+   * @return WebElement representing the located element
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  public WebElement waitAndFindElement(By locator) {
+    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+    return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+  }
+
+  /**
+   * Waits for a specific seconds for the element to have text.
+   *
+   * @param element
+   *            - By element
+   * @param timeout
+   *            - Duration timeout
+   * @param expectedText
+   *            - String expected text
+   * @return boolean - true if element has expected text, false otherwise
+   * @author Pabitra Swain (pabitra.swain.work@gmail.com)
+   */
+  public boolean waitAndCheckElementHasText(By element, Duration timeout, String expectedText) {
+    try {
+      WebDriverWait wait = new WebDriverWait(driver, timeout);
+      return wait.until(ExpectedConditions.textToBePresentInElementLocated(element, expectedText));
+    } catch (TimeoutException e) {
+      Log.error("TimeoutException: Element did not have the expected text within the specified time.");
+      return false;
+    }
+  }
+
+  /**
+   * Waits for a specific seconds for the URL to contain the expected value.
+   *
+   * @param expectedValue
+   *            - String expected URL value
+   * @param timeout
+   *            - Duration timeout
+   * @return boolean - true if URL contains the expected value, false otherwise
+   * @author Pabitra Swain (pabitra.swain.work@gmail.com)
+   */
+  public boolean waitAndCheckUrlContains(String expectedValue, Duration timeout) {
+    try {
+      WebDriverWait wait = new WebDriverWait(driver, timeout);
+      return wait.until(ExpectedConditions.urlContains(expectedValue));
+    } catch (TimeoutException e) {
+      Log.error("TimeoutException: URL did not contain the expected value within the specified time.");
+      return false;
+    }
+  }
+
+  /**
+   * Waits for a specific seconds for an alert to be present.
+   *
+   * @param timeout
+   *            - Duration timeout
+   * @return boolean - true if alert is present, false otherwise
+   * @author Pabitra Swain (pabitra.swain.work@gmail.com)
+   */
+  public boolean waitAndCheckIsAlertPresent(Duration timeout) {
+    try {
+      WebDriverWait wait = new WebDriverWait(driver, timeout);
+      return wait.until(ExpectedConditions.alertIsPresent()) != null;
+    } catch (TimeoutException e) {
+      Log.error("TimeoutException: Alert did not appear within the specified time.");
+      return false;
+    }
+  }
+
+  /**
+   * Waits for a specific seconds for the element to be selected.
+   *
+   * @param element
+   *            - By element
+   * @param timeout
+   *            - Duration timeout
+   * @return boolean - true if element is selected, false otherwise
+   * @author Pabitra Swain (pabitra.swain.work@gmail.com)
+   */
+  public boolean waitAndCheckIsElementSelected(By element, Duration timeout) {
+    try {
+      WebDriverWait wait = new WebDriverWait(driver, timeout);
+      return wait.until(ExpectedConditions.elementToBeSelected(element));
+    } catch (TimeoutException e) {
+      Log.error("TimeoutException: Element was not selected within the specified time.");
+      return false;
+    }
+  }
+
+  /**
+   * Waits for a specific seconds for the element's attribute to have a certain
+   * value.
+   *
+   * @param element
+   *            - By element
+   * @param timeout
+   *            - duration
+   * @param attributeName
+   *            - String attribute name
+   * @param expectedValue
+   *            - String expected attribute value
+   * @return boolean - true if the attribute has the expected value, false
+   *         otherwise
+   * @author Pabitra Swain (pabitra.swain.work@gmail.com)
+   */
+  public boolean waitAndCheckIsElementAttributeHasValue(By element, Duration timeout, String attributeName,
+      String expectedValue) {
+    try {
+      WebDriverWait wait = new WebDriverWait(driver, timeout);
+      return wait.until(ExpectedConditions.attributeToBe(element, attributeName, expectedValue));
+    } catch (TimeoutException e) {
+      Log.error("TimeoutException: Element attribute did not have the expected value within the specified time.");
+      return false;
+    }
+  }
+
+  /**
+   * Waits for a specific seconds for the element to be present in the DOM.
+   *
+   * @param element
+   *            - By element
+   * @param timeout
+   *            - Duration timeout
+   * @return boolean - true if element is present, false otherwise
+   * @author Pabitra Swain (pabitra.swain.work@gmail.com)
+   */
+  public boolean waitAndCheckIsPresent(By element, Duration timeout) {
+    try {
+      WebDriverWait wait = new WebDriverWait(driver, timeout);
+      return wait.until(ExpectedConditions.presenceOfElementLocated(element)) != null;
+    } catch (TimeoutException e) {
+      Log.error("TimeoutException: Element was not present within the specified time.");
+      return false;
+    }
+  }
+
+  /**
+   * Waits for a specific seconds for the element to be clickable using a custom
+   * condition.
+   *
+   * @param element
+   *            - By element
+   * @param timeout
+   *            - Duration timeout
+   * @return boolean - true if the element is clickable, false otherwise
+   * @author Pabitra Swain (pabitra.swain.work@gmail.com)
+   */
+  public boolean waitAndCheckIsClickableEnhanced(By element, Duration timeout) {
+    try {
+      WebDriverWait wait = new WebDriverWait(driver, timeout);
+      return wait.until(driver -> {
+        WebElement webElement = driver.findElement(element);
+        return webElement.isDisplayed() && webElement.isEnabled();
+      });
+    } catch (TimeoutException e) {
+      Log.error("TimeoutException: Element was not clickable within the specified time.");
+      return false;
+    }
+  }
+
+  /**
+   * Scrolls to the element
+   *
+   * @param element
+   *            - By element
+   * @return boolean - true if the scroll were successful, false otherwise
+   * @author Pabitra Swain (pabitra.swain.work@gmail.com)
+   */
+  private boolean scrollToElement(By element) {
+    try {
+      WebElement webElement = driver.findElement(element);
+      actions.moveToElement(webElement).perform();
+      return true;
+    } catch (Exception e) {
+      Log.error("Exception during scroll and click...", e);
+      return false;
+    }
+  }
+
+  /**
+   * Scrolls to the element and performs a click.
+   *
+   * @param element
+   *            - By element
+   * @return boolean - true if the scroll and click were successful, false
+   *         otherwise
+   * @author Pabitra Swain (pabitra.swain.work@gmail.com)
+   */
+  public boolean scrollAndClick(By element) {
+    try {
+      WebElement webElement = driver.findElement(element);
+      actions.moveToElement(webElement).click().build().perform();
+      return true;
+    } catch (Exception e) {
+      Log.error("Exception during scroll and click...", e);
+      return false;
+    }
+  }
 }

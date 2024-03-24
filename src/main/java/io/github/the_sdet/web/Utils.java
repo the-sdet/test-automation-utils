@@ -1,9 +1,7 @@
 package io.github.the_sdet.web;
 
-import io.github.the_sdet.logger.Log;
-import org.apache.commons.io.FileUtils;
-
 import java.io.*;
+import java.time.Duration;
 
 /**
  * Abstract class containing utility methods for web automation.
@@ -59,13 +57,36 @@ public abstract class Utils {
   abstract void click(String xpath);
 
   /**
+   * Enters value on to element identified by the specified XPath
+   *
+   * @param xpath
+   *            The XPath of the element
+   * @param value
+   *            Value to send
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  abstract void fillText(String xpath, String value);
+
+  /**
    * Clicks on the element identified by the specified XPath using JavaScript.
    *
    * @param xpath
    *            The XPath of the element to click.
    * @author Pabitra Swain (contact.the.sdet@gmail.com)
    */
-  abstract void jsClick(String xpath);
+  abstract void javaScriptClick(String xpath);
+
+  /**
+   * Enters value on to element identified by the specified XPath using
+   * JavaScript.
+   *
+   * @param xpath
+   *            The XPath of the element
+   * @param value
+   *            Value to send
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  abstract void javaScriptFillText(String xpath, String value);
 
   /**
    * Waits for the element identified by the specified XPath to be clickable and
@@ -87,7 +108,7 @@ public abstract class Utils {
    *            The number of seconds to wait.
    * @author Pabitra Swain (contact.the.sdet@gmail.com)
    */
-  abstract void wait(int seconds);
+  abstract void waitForSeconds(int seconds);
 
   /**
    * Enters the specified text into the element identified by the specified XPath.
@@ -307,6 +328,53 @@ public abstract class Utils {
   abstract String getAttributeValue(String xpath, String attributeName);
 
   /**
+   * Checks if the element identified by XPath is visible.
+   *
+   * @param xpath
+   *            XPath identifying the element
+   * @return true if the element is visible, false otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  abstract boolean isVisible(String xpath);
+
+  /**
+   * Waits for the element identified by XPath to be visible.
+   *
+   * @param xpath
+   *            XPath identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return true if the element becomes visible within the duration, false
+   *         otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  abstract boolean waitAndCheckIsVisible(String xpath, Duration duration);
+
+  /**
+   * Waits for the element identified by XPath to be clickable.
+   *
+   * @param xpath
+   *            XPath identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  abstract boolean waitAndCheckIsClickable(String xpath, Duration duration);
+
+  /**
+   * Waits for the element identified by XPath to become invisible.
+   *
+   * @param xpath
+   *            XPath identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return true if the element becomes invisible within the duration, false
+   *         otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  abstract boolean waitAndCheckIsInVisible(String xpath, Duration duration);
+
+  /**
    * Customizes the XPath pattern by replacing placeholder values with the
    * provided values.
    *
@@ -355,79 +423,5 @@ public abstract class Utils {
    */
   public String customizeXpath(String rawXpath, String value1, String value2, String value3) {
     return rawXpath.replace("v1", value1).replace("v2", value2).replace("v3", value2);
-  }
-
-  /**
-   * Copies a file from the source to the destination.
-   *
-   * @param source
-   *            The source file.
-   * @param destination
-   *            The destination file.
-   * @author Pabitra Swain (contact.the.sdet@gmail.com)
-   */
-  public void copyFile(File source, File destination) {
-    try {
-      FileUtils.copyFile(source, destination);
-      Log.info("File saved to: " + destination);
-    } catch (IOException e) {
-      Log.error("Could NOT save screenshot...", e);
-    }
-  }
-
-  /**
-   * Copies a file from the source to the destination with metadata.
-   *
-   * @param source
-   *            The source file.
-   * @param destination
-   *            The destination file.
-   * @param metadata
-   *            The metadata information.
-   * @author Pabitra Swain (contact.the.sdet@gmail.com)
-   */
-  public void copyFile(File source, File destination, String metadata) {
-    try {
-      FileUtils.copyFile(source, destination);
-      Log.info(metadata + " saved to: " + destination);
-    } catch (IOException e) {
-      Log.error("Could NOT save " + metadata + "...", e);
-    }
-  }
-
-  /**
-   * Converts a byte array to a file.
-   *
-   * @param data
-   *            The byte array data.
-   * @return The file created from the byte array.
-   * @author Pabitra Swain (contact.the.sdet@gmail.com)
-   */
-  public File byteArrayToFile(byte[] data) {
-    File screenshotFile = null;
-    try {
-      // Wrap byte array into ByteArrayInputStream
-      InputStream inputStream = new ByteArrayInputStream(data);
-
-      // Create temporary file
-      screenshotFile = File.createTempFile("screenshot", ".png");
-
-      // Create FileOutputStream without specifying a file path
-      OutputStream outputStream = new FileOutputStream(screenshotFile);
-
-      // Read from input stream and write to output stream
-      byte[] buffer = new byte[1024];
-      int length;
-      while ((length = inputStream.read(buffer)) != -1) {
-        outputStream.write(buffer, 0, length);
-      }
-
-      // Close streams
-      inputStream.close();
-      outputStream.close();
-    } catch (IOException e) {
-      Log.error("Couldn't save screenshot to a file...", e);
-    }
-    return screenshotFile;
   }
 }

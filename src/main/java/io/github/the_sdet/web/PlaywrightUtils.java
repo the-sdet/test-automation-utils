@@ -3,12 +3,16 @@ package io.github.the_sdet.web;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.TimeoutError;
+import com.microsoft.playwright.options.WaitForSelectorState;
 import io.github.the_sdet.logger.Log;
 
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Base64;
+
+import static io.github.the_sdet.files.FileUtils.byteArrayToFile;
 
 /**
  * Utility class for Playwright-based web automation tasks. This class provides
@@ -99,6 +103,20 @@ public class PlaywrightUtils extends Utils {
   }
 
   /**
+   * Enters value on to element identified by the specified XPath
+   *
+   * @param xpath
+   *            The XPath of the element
+   * @param value
+   *            Value to send
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  @Override
+  void fillText(String xpath, String value) {
+    page.locator(xpath).fill(value);
+  }
+
+  /**
    * Clicks on the specified locator.
    *
    * @param element
@@ -118,11 +136,33 @@ public class PlaywrightUtils extends Utils {
    * @author Pabitra Swain (contact.the.sdet@gmail.com)
    */
   @Override
-  public void jsClick(String xpath) {
+  public void javaScriptClick(String xpath) {
     try {
       String jsCommand = "document.evaluate(\"$xpath\", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.click();";
       page.evaluate(jsCommand.replace("$xpath", xpath));
       Log.info("Clicked on Element with Xpath: " + xpath);
+    } catch (Exception e) {
+      Log.error("Exception: " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Enters value on to element identified by the specified XPath using
+   * JavaScript.
+   *
+   * @param xpath
+   *            The XPath of the element
+   * @param value
+   *            Value to send
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  @Override
+  void javaScriptFillText(String xpath, String value) {
+    try {
+      String jsCommand = "document.evaluate(\"$xpath\", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.value="
+          + value + ";";
+      page.evaluate(jsCommand.replace("$xpath", xpath));
+      Log.info("Entered Text" + value + " on Element with Xpath: " + xpath);
     } catch (Exception e) {
       Log.error("Exception: " + e.getMessage(), e);
     }
@@ -151,7 +191,7 @@ public class PlaywrightUtils extends Utils {
    */
   @Override
   public File getScreenshot() {
-    return byteArrayToFile(getScreenshotAsByte());
+    return byteArrayToFile(getScreenshotAsByte(), "png");
   }
 
   /**
@@ -176,7 +216,7 @@ public class PlaywrightUtils extends Utils {
    */
   @Override
   public File getElementScreenshot(String xpath) {
-    return byteArrayToFile(getElementScreenshotAsByte(xpath));
+    return byteArrayToFile(getElementScreenshotAsByte(xpath), "png");
   }
 
   /**
@@ -202,7 +242,7 @@ public class PlaywrightUtils extends Utils {
    */
   @Override
   public File takeFullPageScreenshot() {
-    return byteArrayToFile(getFullPageScreenshotAsByte());
+    return byteArrayToFile(getFullPageScreenshotAsByte(), "png");
   }
 
   /**
@@ -324,7 +364,7 @@ public class PlaywrightUtils extends Utils {
       page.waitForSelector(xpath, new Page.WaitForSelectorOptions().setTimeout(seconds * 1000));
       click(xpath);
     } catch (TimeoutError e) {
-      Log.error("Couldn't find element within specified time period. Xpath: " + xpath);
+      Log.error("Couldn't find element within specified time period. Xpath: " + xpath, e);
     }
   }
 
@@ -336,7 +376,7 @@ public class PlaywrightUtils extends Utils {
    * @author Pabitra Swain (contact.the.sdet@gmail.com)
    */
   @Override
-  public void wait(int seconds) {
+  public void waitForSeconds(int seconds) {
     Log.info("Wait started for " + seconds + " seconds...");
     page.waitForTimeout(seconds * 1000);
     Log.info(seconds + " seconds of wait completed...");
@@ -511,5 +551,148 @@ public class PlaywrightUtils extends Utils {
    */
   Locator findElementByCustomizeXpath(String rawXpath, String value1, String value2, String value3) {
     return getElementByXpath(customizeXpath(rawXpath, value1, value2, value3));
+  }
+
+  /**
+   * Checks if the element identified by XPath is visible.
+   *
+   * @param xpath
+   *            XPath identifying the element
+   * @return true if the element is visible, false otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  @Override
+  public boolean isVisible(String xpath) {
+    return isVisible(page.locator(xpath));
+  }
+
+  /**
+   * Checks if the element identified by the given locator is visible.
+   *
+   * @param locator
+   *            locator for identifying the element
+   * @return true if the element is visible, false otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  public boolean isVisible(Locator locator) {
+    try {
+      return locator.isVisible();
+    } catch (NullPointerException e) {
+      return false;
+    }
+  }
+
+  /**
+   * Waits for the element identified by XPath to be visible.
+   *
+   * @param xpath
+   *            XPath identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return true if the element becomes visible within the duration, false
+   *         otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  @Override
+  public boolean waitAndCheckIsVisible(String xpath, Duration duration) {
+    return waitAndCheckIsVisible(page.locator(xpath), duration);
+  }
+
+  /**
+   * Waits for the element identified by XPath to be visible.
+   *
+   * @param element
+   *            locator for identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return true if the element becomes visible within the duration, false
+   *         otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  public boolean waitAndCheckIsVisible(Locator element, Duration duration) {
+    element.waitFor(
+        new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(duration.toMillis()));
+    return element.isVisible();
+  }
+
+  /**
+   * Waits for the element identified by XPath to be clickable.
+   *
+   * @param xpath
+   *            XPath identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return true if the element becomes clickable within the duration, false
+   *         otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  @Override
+  public boolean waitAndCheckIsClickable(String xpath, Duration duration) {
+    return waitAndCheckIsClickable(page.locator(xpath), duration);
+  }
+
+  /**
+   * Waits for the element identified by XPath to be clickable.
+   *
+   * @param element
+   *            locator for identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return true if the element becomes clickable within the duration, false
+   *         otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  public boolean waitAndCheckIsClickable(Locator element, Duration duration) {
+    element.waitFor(new Locator.WaitForOptions().setTimeout(duration.toMillis()));
+    return element.isEnabled();
+  }
+
+  /**
+   * Waits for the element identified by XPath to become invisible.
+   *
+   * @param xpath
+   *            XPath identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return true if the element becomes invisible within the duration, false
+   *         otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  @Override
+  public boolean waitAndCheckIsInVisible(String xpath, Duration duration) {
+    return waitAndCheckIsInVisible(page.locator(xpath), duration);
+  }
+
+  /**
+   * Waits for the element identified by the given locator to become invisible.
+   *
+   * @param element
+   *            locator for identifying the element
+   * @param duration
+   *            maximum duration to wait
+   * @return true if the element becomes invisible within the duration, false
+   *         otherwise
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  public boolean waitAndCheckIsInVisible(Locator element, Duration duration) {
+    element.waitFor(
+        new Locator.WaitForOptions().setState(WaitForSelectorState.HIDDEN).setTimeout(duration.toMillis()));
+    return element.isHidden();
+  }
+
+  /**
+   * Waits for the element identified by XPath to be present within a default
+   * duration of 5 seconds.
+   *
+   * @param xpath
+   *            XPath identifying the element
+   * @param duration
+   *            maximum wait time
+   * @return WebElement representing the located element
+   * @author Pabitra Swain (contact.the.sdet@gmail.com)
+   */
+  public Locator waitAndFindElement(String xpath, Duration duration) {
+    page.waitForSelector(xpath, new Page.WaitForSelectorOptions().setTimeout(duration.toMillis()));
+    return page.locator(xpath);
   }
 }
